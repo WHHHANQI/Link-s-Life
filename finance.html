@@ -3,50 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Link's Life - 资产</title>
+    <title>Link's Wealth</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <nav class="navbar">
         <div class="brand">Link's Life</div>
         <div class="nav-links">
-            <a href="index.html">🏠 关于我</a>
-            <a href="finance.html" class="active">💰 资产记录</a>
-            <a href="wishes.html">✨ 愿望影集</a>
+            <a href="index.html">🏠 关于 (About)</a>
+            <a href="finance.html" class="active">💰 资产 (Wealth)</a>
+            <a href="wishes.html">✨ 愿望 (Wishes)</a>
+            <a href="success.html">🏆 日记 (Success)</a>
         </div>
     </nav>
 
     <div class="container">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <div id="connection-status" style="font-size: 0.8rem; color: #10b981; display: none;">
-                ✅ 云端已连接
+                ✅ 云端已连接 (Connected)
             </div>
             <button onclick="toggleConfig()" style="font-size: 0.8rem; padding: 4px 8px; background: #cbd5e1; color: #334155;">
-                ⚙️ 配置 / 切换仓库
+                ⚙️ 配置 (Settings)
             </button>
         </div>
 
         <div class="card" id="config-card" style="display: none; border: 2px dashed #94a3b8;">
-            <h3>⚙️ 数据库配置</h3>
+            <h3>⚙️ 数据库配置 (Database Config)</h3>
             <p style="font-size: 0.8rem; color: #64748b;">平时已隐藏，修改后点击保存即可。</p>
             <input id="ghUser" placeholder="GitHub Username">
             <input id="ghRepo" placeholder="Repository Name" value="Link-s-Life">
-            <button onclick="saveConfig()">保存配置</button>
+            <button onclick="saveConfig()">保存配置 (Save)</button>
         </div>
 
         <div class="card">
-            <h2>📝 今日资产</h2>
+            <h2>📝 今日资产 (Today's Assets)</h2>
             <input id="dateInput" type="date">
-            <input id="hold" type="number" placeholder="持仓金额">
-            <input id="cash" type="number" placeholder="现金余额">
-            <button onclick="addRecord()">上传数据</button>
+            <input id="hold" type="number" placeholder="持仓金额 (Holdings)">
+            <input id="cash" type="number" placeholder="现金余额 (Cash)">
+            <button onclick="addRecord()">上传数据 (Upload)</button>
         </div>
 
         <div class="card">
-            <h2>📊 历史趋势</h2>
+            <h2>📊 历史趋势 (History)</h2>
             <div id="status"></div>
             <table style="width:100%; text-align:left;">
-                <thead><tr><th>日期</th><th>总资产</th><th>仓位</th></tr></thead>
+                <thead><tr><th>日期 (Date)</th><th>总资产 (Total)</th><th>仓位 (Pos%)</th></tr></thead>
                 <tbody id="tableBody"></tbody>
             </table>
         </div>
@@ -59,39 +60,22 @@
         const db = new GithubDB();
         const DATA_FILE = "finance_data.json";
 
-        // 切换配置框的显示/隐藏
         function toggleConfig() {
             const card = document.getElementById('config-card');
-            if (card.style.display === 'none') {
-                card.style.display = 'block';
-            } else {
-                card.style.display = 'none';
-            }
+            card.style.display = (card.style.display === 'none') ? 'block' : 'none';
         }
 
-        // 监听 app-ready 信号
         window.addEventListener('app-ready', async () => {
-            console.log("App Unlocked...");
-            
             document.getElementById('dateInput').valueAsDate = new Date();
-            
-            // 回填输入框
             if(db.config.user) document.getElementById('ghUser').value = db.config.user;
 
-            // === 核心逻辑修改 ===
-            // 1. 如果有 Token，说明配置过了：
             if (db.token) {
-                // 隐藏配置框
                 document.getElementById('config-card').style.display = 'none'; 
-                // 显示“已连接”小绿字
                 document.getElementById('connection-status').style.display = 'block';
             } else {
-                // 2. 如果没 Token，说明是第一次用，或者清空了缓存：
-                // 强制展开配置框，提醒用户输入
                 document.getElementById('config-card').style.display = 'block';
             }
 
-            // 加载数据
             const data = await db.load(DATA_FILE);
             if(data) renderTable(data);
         });
@@ -99,10 +83,10 @@
         function saveConfig() {
             const user = document.getElementById('ghUser').value;
             const repo = document.getElementById('ghRepo').value;
-            const token = prompt("请输入 GitHub Token:"); 
+            const token = prompt("请输入 GitHub Token (Enter Token):"); 
             if(token) {
                 db.saveConfig(user, repo, token);
-                alert("配置已保存！刷新生效。");
+                alert("配置已保存！Saved!");
                 location.reload();
             }
         }
@@ -121,9 +105,9 @@
 
             data.sort((a,b) => new Date(a.date) - new Date(b.date));
 
-            document.getElementById('status').innerText = "同步中...";
+            document.getElementById('status').innerText = "Syncing...";
             const success = await db.save(DATA_FILE, data);
-            document.getElementById('status').innerText = success ? "✅ 同步成功" : "❌ 失败";
+            document.getElementById('status').innerText = success ? "✅ Success" : "❌ Failed";
             if(success) renderTable(data);
         }
 
