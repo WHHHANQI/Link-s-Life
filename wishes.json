@@ -12,5 +12,12 @@
     "cost": 0,
     "img": "https://github.com/WHHHANQI/Link-s-Life/blob/main/image/realmadrid.jpg?raw=true",
     "current": 0
+  },
+  {
+    "id": 1765296288831,
+    "title": "Porsche panamera",
+    "cost": 2000000,
+    "img": "https://github.com/WHHHANQI/Link-s-Life/blob/main/image/porsche.png?raw=true",
+    "current": 0
   }
 ]
