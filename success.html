@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link's Success Journal</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* 日记专属样式：保留换行符，让排版更像文章 */
+        .journal-content {
+            white-space: pre-wrap; 
+            line-height: 1.6;
+            color: #334155;
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        .journal-date {
+            font-size: 0.9rem;
+            color: #64748b;
+            font-weight: bold;
+            margin-bottom: 5px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 5px;
+            display: flex; justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="brand">Link's Life</div>
+        <div class="nav-links">
+            <a href="index.html">🏠 关于 (About)</a>
+            <a href="finance.html">💰 资产 (Wealth)</a>
+            <a href="wishes.html">✨ 愿望 (Wishes)</a>
+            <a href="success.html" class="active">🏆 日记 (Success)</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <h2>🏆 今日成功日记 (Today's Success)</h2>
+            <p style="font-size: 0.8rem; color: #64748b;">
+                每天记录 5 件做成功的事，无论大小。<br>
+                Record at least 5 achievements daily, no matter how small.
+            </p>
+            
+            <input id="dateInput" type="date">
+            
+            <textarea id="journalInput" rows="8" 
+                style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit;" 
+                placeholder="1. 读了20页书 (Read 20 pages)&#10;2. 坚持记账 (Tracked expenses)&#10;3. ..."></textarea>
+            
+            <button onclick="addJournal()" style="margin-top: 10px; width: 100%;">💾 保存日记 (Save Journal)</button>
+        </div>
+
+        <div id="journalGrid">
+            </div>
+    </div>
+
+    <script src="js/db.js"></script>
+    <script src="js/lock.js"></script>
+
+    <script>
+        const db = new GithubDB();
+        const FILE_NAME = "success_journal.json"; // 专属的数据文件
+        let localData = [];
+
+        window.addEventListener('app-ready', async () => {
+            document.getElementById('dateInput').valueAsDate = new Date();
+            
+            const data = await db.load(FILE_NAME);
+            if(data) {
+                localData = data;
+                renderJournals();
+            }
+        });
+
+        async function addJournal() {
+            const date = document.getElementById('dateInput').value;
+            const content = document.getElementById('journalInput').value;
+            
+            if(!content.trim()) return alert("写点什么吧 (Please write something)!");
+
+            const newEntry = { 
+                id: Date.now(), 
+                date, 
+                content 
+            };
+            
+            // 简单的逻辑：如果同一天已经写过，就追加内容，或者你可以选择覆盖
+            // 这里我们采用直接添加到列表最前面
+            localData.push(newEntry);
+            
+            // 按日期倒序排序
+            localData.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+            await db.save(FILE_NAME, localData);
+            
+            // 清空输入框
+            document.getElementById('journalInput').value = "";
+            renderJournals();
+        }
+
+        function renderJournals() {
+            const grid = document.getElementById('journalGrid');
+            grid.innerHTML = "";
+            
+            localData.forEach(item => {
+                grid.innerHTML += `
+                    <div class="card">
+                        <div class="journal-date">
+                            <span>📅 ${item.date}</span>
+                            <span style="cursor:pointer; color:#ef4444;" onclick="deleteJournal(${item.id})">×</span>
+                        </div>
+                        <div class="journal-content">${item.content}</div>
+                    </div>
+                `;
+            });
+        }
+
+        async function deleteJournal(id) {
+            if(!confirm("确定删除吗 (Delete this)?")) return;
+            localData = localData.filter(i => i.id !== id);
+            await db.save(FILE_NAME, localData);
+            renderJournals();
+        }
+    </script>
+</body>
+</html>
