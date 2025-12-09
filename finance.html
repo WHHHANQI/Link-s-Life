@@ -7,16 +7,6 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <nav class="navbar">
-        <div class="brand">Link's Life</div>
-        <div class="nav-links">
-            <a href="index.html">🏠 关于 (About)</a>
-            <a href="finance.html" class="active">💰 资产 (Wealth)</a>
-            <a href="wishes.html">✨ 愿望 (Wishes)</a>
-            <a href="success.html">🏆 日记 (Success)</a>
-        </div>
-    </nav>
-
     <div class="container">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <div id="connection-status" style="font-size: 0.8rem; color: #10b981; display: none;">
@@ -119,6 +109,9 @@
                 tbody.innerHTML += `<tr><td>${row.date}</td><td>${row.total}</td><td>${pos}%</td></tr>`;
             });
         }
+    </script>
+    <script src="js/nav.js"></script> <script>
+        renderNav('finance'); 
     </script>
 </body>
 </html>
