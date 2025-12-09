@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link's Advice</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h2>💡 给自己的建议 (Advice to Myself)</h2>
+            <p style="font-size: 0.8rem; color: #64748b;">
+                当迷茫时，听听过去清醒的自己怎么说。<br>
+                Listen to your clear-minded self when you are lost.
+            </p>
+            
+            <textarea id="adviceInput" rows="4" 
+                style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit;" 
+                placeholder="e.g. 永远不要在晚上做决定 (Never make decisions at night)..."></textarea>
+            
+            <button onclick="addAdvice()" style="margin-top: 10px; width: 100%;">💾 保存建议 (Save Advice)</button>
+        </div>
+
+        <div id="adviceGrid">
+            </div>
+    </div>
+
+    <script src="js/db.js"></script>
+    <script src="js/lock.js"></script>
+    <script src="js/nav.js"></script> <script>
+        // 1. 生成导航栏，并告诉它当前是 'advice' 页
+        renderNav('advice');
+
+        const db = new GithubDB();
+        const FILE_NAME = "my_advice.json";
+        let localData = [];
+
+        window.addEventListener('app-ready', async () => {
+            const data = await db.load(FILE_NAME);
+            if(data) {
+                localData = data;
+                renderAdvice();
+            }
+        });
+
+        async function addAdvice() {
+            const content = document.getElementById('adviceInput').value;
+            if(!content.trim()) return;
+
+            const newEntry = { 
+                id: Date.now(), 
+                content,
+                date: new Date().toLocaleDateString()
+            };
+            
+            localData.unshift(newEntry); // 加到最前面
+            await db.save(FILE_NAME, localData);
+            
+            document.getElementById('adviceInput').value = "";
+            renderAdvice();
+        }
+
+        function renderAdvice() {
+            const grid = document.getElementById('adviceGrid');
+            grid.innerHTML = "";
+            
+            localData.forEach(item => {
+                grid.innerHTML += `
+                    <div class="card" style="border-left: 5px solid #fbbf24;">
+                        <div style="font-weight:bold; color:#334155; margin-bottom:8px; white-space: pre-wrap;">${item.content}</div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#94a3b8;">
+                            <span>📅 ${item.date}</span>
+                            <span style="cursor:pointer; color:#ef4444;" onclick="deleteAdvice(${item.id})">Delete</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        async function deleteAdvice(id) {
+            if(!confirm("Remove this advice?")) return;
+            localData = localData.filter(i => i.id !== id);
+            await db.save(FILE_NAME, localData);
+            renderAdvice();
+        }
+    </script>
+</body>
+</html>
