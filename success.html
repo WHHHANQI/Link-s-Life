@@ -28,16 +28,6 @@
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="brand">Link's Life</div>
-        <div class="nav-links">
-            <a href="index.html">🏠 关于 (About)</a>
-            <a href="finance.html">💰 资产 (Wealth)</a>
-            <a href="wishes.html">✨ 愿望 (Wishes)</a>
-            <a href="success.html" class="active">🏆 日记 (Success)</a>
-        </div>
-    </nav>
-
     <div class="container">
         <div class="card">
             <h2>🏆 今日成功日记 (Today's Success)</h2>
@@ -126,6 +116,9 @@
             await db.save(FILE_NAME, localData);
             renderJournals();
         }
+    </script>
+    <script src="js/nav.js"></script> <script>
+        renderNav('success'); 
     </script>
 </body>
 </html>
