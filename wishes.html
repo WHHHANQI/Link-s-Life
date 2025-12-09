@@ -1,1 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link's Life - 愿望</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* 愿望页面的特有样式 */
+        .wish-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .wish-card-img { width: 100%; height: 150px; object-fit: cover; background: #eee; border-radius: 8px 8px 0 0; }
+        .wish-info { padding: 10px; }
+        .progress-bar { height: 8px; background: #eee; border-radius: 4px; overflow: hidden; margin: 10px 0; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #8b5cf6); width: 0%; transition: 1s; }
+        .add-form { display: none; margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 10px; }
+    </style>
+</head>
+<body>
 
+    <nav class="navbar">
+        <div class="brand">Link's Life</div>
+        <div class="nav-links">
+            <a href="index.html">💰 资产记录</a>
+            <a href="wishes.html" class="active">✨ 愿望影集</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h2>✨ 愿望清单</h2>
+                <button onclick="toggleForm()">+ 添加愿望</button>
+            </div>
+            
+            <div id="addForm" class="add-form">
+                <input id="wTitle" placeholder="愿望名称 (e.g. RTX 5090)">
+                <input id="wCost" type="number" placeholder="目标金额">
+                <input id="wImg" placeholder="图片URL">
+                <button onclick="addNewWish()">保存</button>
+            </div>
+        </div>
+
+        <div id="wishGrid" class="wish-grid">
+            </div>
+    </div>
+
+    <script src="js/db.js"></script>
+    <script>
+        const db = new GithubDB();
+        const FILE_NAME = "wishes.json";
+        let localWishes = [];
+
+        window.onload = async () => {
+            // 如果首页配置过，这里直接就能用！
+            const data = await db.load(FILE_NAME);
+            if(data) {
+                localWishes = data;
+                renderWishes();
+            } else if (!db.token) {
+                alert("请先去首页配置 GitHub Token！");
+            }
+        };
+
+        function toggleForm() {
+            const form = document.getElementById('addForm');
+            form.style.display = form.style.display === 'block' ? 'none' : 'block';
+        }
+
+        async function addNewWish() {
+            const title = document.getElementById('wTitle').value;
+            const cost = Number(document.getElementById('wCost').value);
+            const img = document.getElementById('wImg').value;
+            
+            if(!title || !cost) return alert("请填写完整");
+
+            const newWish = { 
+                id: Date.now(), // 唯一ID
+                title, cost, img, 
+                current: 0 
+            };
+            
+            localWishes.push(newWish);
+            await saveAll();
+            toggleForm();
+        }
+
+        async function addDeposit(id) {
+            const amount = Number(prompt("存入多少钱？"));
+            if(!amount) return;
+
+            const wish = localWishes.find(w => w.id === id);
+            if(wish) {
+                wish.current += amount;
+                await saveAll();
+            }
+        }
+
+        async function saveAll() {
+            await db.save(FILE_NAME, localWishes);
+            renderWishes();
+        }
+
+        function renderWishes() {
+            const grid = document.getElementById('wishGrid');
+            grid.innerHTML = "";
+            
+            localWishes.forEach(w => {
+                const pct = Math.min(100, (w.current / w.cost) * 100).toFixed(1);
+                
+                grid.innerHTML += `
+                    <div class="card" style="padding:0;">
+                        <img src="${w.img || 'https://via.placeholder.com/300'}" class="wish-card-img">
+                        <div class="wish-info">
+                            <h3>${w.title}</h3>
+                            <p style="color:#666; font-size:0.9rem;">目标: ¥${w.cost}</p>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width:${pct}%"></div>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+                                <span>已存: ¥${w.current}</span>
+                                <span>${pct}%</span>
+                            </div>
+                            <button onclick="addDeposit(${w.id})" style="width:100%; margin-top:10px; background:#10b981;">💰 存入</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>
