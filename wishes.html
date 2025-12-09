@@ -17,24 +17,25 @@
     <nav class="navbar">
         <div class="brand">Link's Life</div>
         <div class="nav-links">
-            <a href="index.html">🏠 关于我</a>
-            <a href="finance.html">💰 资产记录</a>
-            <a href="wishes.html" class="active">✨ 愿望影集</a>
+            <a href="index.html">🏠 关于 (About)</a>
+            <a href="finance.html">💰 资产 (Wealth)</a>
+            <a href="wishes.html" class="active">✨ 愿望 (Wishes)</a>
+            <a href="success.html">🏆 日记 (Success)</a>
         </div>
     </nav>
 
     <div class="container">
         <div class="card">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h2>✨ 愿望清单</h2>
-                <button onclick="toggleForm()">+ 添加愿望</button>
+                <h2>✨ 愿望清单 (Wish List)</h2>
+                <button onclick="toggleForm()">+ 添加 (Add)</button>
             </div>
             
             <div id="addForm" class="add-form">
-                <input id="wTitle" placeholder="愿望名称">
-                <input id="wCost" type="number" placeholder="目标金额 (选填，不填则为无价)">
-                <input id="wImg" placeholder="图片URL">
-                <button onclick="addNewWish()">保存</button>
+                <input id="wTitle" placeholder="愿望名称 (Item Name)">
+                <input id="wCost" type="number" placeholder="目标金额 (Cost - Optional)">
+                <input id="wImg" placeholder="图片链接 (Image URL)">
+                <button onclick="addNewWish()">保存 (Save)</button>
             </div>
         </div>
 
@@ -49,7 +50,6 @@
         const FILE_NAME = "wishes.json";
         let localWishes = [];
 
-        // 【核心修改】等待解锁信号
         window.addEventListener('app-ready', async () => {
             const data = await db.load(FILE_NAME);
             if(data) {
@@ -65,11 +65,10 @@
 
         async function addNewWish() {
             const title = document.getElementById('wTitle').value;
-            // 允许 cost 为空，默认为 0
             const cost = Number(document.getElementById('wCost').value) || 0; 
             const img = document.getElementById('wImg').value;
             
-            if(!title) return alert("愿望名称必须填哦");
+            if(!title) return alert("Please enter a name!");
 
             const newWish = { 
                 id: Date.now(), 
@@ -82,7 +81,7 @@
         }
 
         async function addDeposit(id) {
-            const amount = Number(prompt("存入多少钱？"));
+            const amount = Number(prompt("Deposit Amount?"));
             if(!amount) return;
             const wish = localWishes.find(w => w.id === id);
             if(wish) {
@@ -100,7 +99,6 @@
                 let footerHtml = "";
                 let progressHtml = "";
 
-                // 逻辑判断：如果有金额，显示进度条；如果没金额，显示“无价”
                 if (w.cost > 0) {
                     const pct = Math.min(100, (w.current / w.cost) * 100).toFixed(1);
                     progressHtml = `
@@ -109,14 +107,14 @@
                         </div>`;
                     footerHtml = `
                         <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
-                            <span>已存: ¥${w.current}</span>
+                            <span>Saved: ¥${w.current}</span>
                             <span>${pct}%</span>
                         </div>
-                        <button onclick="addDeposit(${w.id})" style="width:100%; margin-top:10px; background:#10b981;">💰 存入</button>
+                        <button onclick="addDeposit(${w.id})" style="width:100%; margin-top:10px; background:#10b981;">💰 存入 (Deposit)</button>
                     `;
                 } else {
                     progressHtml = `<div style="margin:10px 0; color:#8b5cf6; font-weight:bold; font-size:0.9rem;">♾️ Priceless (无价)</div>`;
-                    footerHtml = `<div style="font-size:0.8rem; color:#666;">有些梦想不需要标价，只需要去实现。</div>`;
+                    footerHtml = `<div style="font-size:0.8rem; color:#666;">Just do it.</div>`;
                 }
                 
                 grid.innerHTML += `
@@ -124,7 +122,7 @@
                         <img src="${w.img || 'https://via.placeholder.com/300'}" class="wish-card-img">
                         <div class="wish-info">
                             <h3 style="margin:0 0 5px 0;">${w.title}</h3>
-                            <p style="color:#666; font-size:0.9rem; margin:0;">目标: ${w.cost > 0 ? '¥'+w.cost : '无价'}</p>
+                            <p style="color:#666; font-size:0.9rem; margin:0;">Goal: ${w.cost > 0 ? '¥'+w.cost : 'Priceless'}</p>
                             ${progressHtml}
                             ${footerHtml}
                         </div>
