@@ -17,8 +17,18 @@
     </nav>
 
     <div class="container">
-        <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div id="connection-status" style="font-size: 0.8rem; color: #10b981; display: none;">
+                ✅ 云端已连接
+            </div>
+            <button onclick="toggleConfig()" style="font-size: 0.8rem; padding: 4px 8px; background: #cbd5e1; color: #334155;">
+                ⚙️ 配置 / 切换仓库
+            </button>
+        </div>
+
+        <div class="card" id="config-card" style="display: none; border: 2px dashed #94a3b8;">
             <h3>⚙️ 数据库配置</h3>
+            <p style="font-size: 0.8rem; color: #64748b;">平时已隐藏，修改后点击保存即可。</p>
             <input id="ghUser" placeholder="GitHub Username">
             <input id="ghRepo" placeholder="Repository Name" value="Link-s-Life">
             <button onclick="saveConfig()">保存配置</button>
@@ -43,16 +53,43 @@
     </div>
 
     <script src="js/db.js"></script>
-    <script src="js/lock.js"></script> <script>
+    <script src="js/lock.js"></script>
+
+    <script>
         const db = new GithubDB();
         const DATA_FILE = "finance_data.json";
 
-        // 【核心修改】监听 lock.js 发出的解锁成功信号
+        // 切换配置框的显示/隐藏
+        function toggleConfig() {
+            const card = document.getElementById('config-card');
+            if (card.style.display === 'none') {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        }
+
+        // 监听 app-ready 信号
         window.addEventListener('app-ready', async () => {
-            console.log("App Unlocked, Initializing...");
+            console.log("App Unlocked...");
             
             document.getElementById('dateInput').valueAsDate = new Date();
+            
+            // 回填输入框
             if(db.config.user) document.getElementById('ghUser').value = db.config.user;
+
+            // === 核心逻辑修改 ===
+            // 1. 如果有 Token，说明配置过了：
+            if (db.token) {
+                // 隐藏配置框
+                document.getElementById('config-card').style.display = 'none'; 
+                // 显示“已连接”小绿字
+                document.getElementById('connection-status').style.display = 'block';
+            } else {
+                // 2. 如果没 Token，说明是第一次用，或者清空了缓存：
+                // 强制展开配置框，提醒用户输入
+                document.getElementById('config-card').style.display = 'block';
+            }
 
             // 加载数据
             const data = await db.load(DATA_FILE);
@@ -62,11 +99,10 @@
         function saveConfig() {
             const user = document.getElementById('ghUser').value;
             const repo = document.getElementById('ghRepo').value;
-            // 这里的 prompt 只会在用户点击按钮时触发，不会自动弹
             const token = prompt("请输入 GitHub Token:"); 
             if(token) {
                 db.saveConfig(user, repo, token);
-                alert("配置已保存！即将刷新...");
+                alert("配置已保存！刷新生效。");
                 location.reload();
             }
         }
