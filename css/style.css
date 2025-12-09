@@ -350,3 +350,29 @@ tr:hover { transform: scale(1.01); } /* 表格行微放大 */
     color: #0f172a;
     font-weight: 800;
 }
+
+/* =========================================
+   9. 愿望卡片图片修复 (Wish Card Fix)
+   ========================================= */
+/* 修复图片显示逻辑 */
+.wish-card-img {
+    width: 100%;
+    /* 1. 这里设置你想要的高度，比如 240px 或者 300px */
+    height: 240px; 
+    
+    /* 2. 关键属性：contain 表示完整显示图片（可能有留白），cover 表示铺满但会裁剪 */
+    object-fit: contain; 
+    
+    background-color: #f1f5f9; /* 图片未填满区域的背景色 */
+    border-bottom: 1px solid var(--border);
+    
+    /* 保持卡片顶部的圆角 */
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    display: block;
+}
+
+/* 给愿望卡片的文字内容区域增加呼吸感 */
+.wish-info {
+    padding: 24px;
+}
