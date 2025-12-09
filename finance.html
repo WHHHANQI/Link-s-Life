@@ -7,22 +7,21 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-
     <nav class="navbar">
         <div class="brand">Link's Life</div>
         <div class="nav-links">
-            <a href="index.html" class="active">💰 资产记录</a>
+            <a href="index.html">🏠 关于我</a>
+            <a href="finance.html" class="active">💰 资产记录</a>
             <a href="wishes.html">✨ 愿望影集</a>
         </div>
     </nav>
 
     <div class="container">
         <div class="card">
-            <h3>⚙️ 数据库连接</h3>
-            <p style="font-size:0.8rem; color:#666;">初次使用请填入GitHub用户名和Token，只需配置一次。</p>
+            <h3>⚙️ 数据库配置</h3>
             <input id="ghUser" placeholder="GitHub Username">
             <input id="ghRepo" placeholder="Repository Name" value="Link-s-Life">
-            <button onclick="saveConfig()">连接云端</button>
+            <button onclick="saveConfig()">保存配置</button>
         </div>
 
         <div class="card">
@@ -44,29 +43,30 @@
     </div>
 
     <script src="js/db.js"></script>
-    <script>
-        // 实例化 DB
+    <script src="js/lock.js"></script> <script>
         const db = new GithubDB();
-        const DATA_FILE = "finance_data.json"; // 这个页面专门读写这个文件
+        const DATA_FILE = "finance_data.json";
 
-        // 页面加载
-        window.onload = async () => {
-            document.getElementById('dateInput').valueAsDate = new Date();
-            // 回填配置信息
-            if(db.config.user) document.getElementById('ghUser').value = db.config.user;
+        // 【核心修改】监听 lock.js 发出的解锁成功信号
+        window.addEventListener('app-ready', async () => {
+            console.log("App Unlocked, Initializing...");
             
+            document.getElementById('dateInput').valueAsDate = new Date();
+            if(db.config.user) document.getElementById('ghUser').value = db.config.user;
+
             // 加载数据
             const data = await db.load(DATA_FILE);
             if(data) renderTable(data);
-        };
+        });
 
         function saveConfig() {
             const user = document.getElementById('ghUser').value;
             const repo = document.getElementById('ghRepo').value;
-            const token = prompt("请输入 GitHub Token:");
+            // 这里的 prompt 只会在用户点击按钮时触发，不会自动弹
+            const token = prompt("请输入 GitHub Token:"); 
             if(token) {
                 db.saveConfig(user, repo, token);
-                alert("配置已保存！刷新页面加载数据。");
+                alert("配置已保存！即将刷新...");
                 location.reload();
             }
         }
@@ -77,20 +77,17 @@
             const cash = Number(document.getElementById('cash').value);
             
             let data = await db.load(DATA_FILE) || [];
-            
-            // 简单的新增/覆盖逻辑
             const newRecord = { date, hold, cash, total: hold+cash };
+            
             const idx = data.findIndex(d => d.date === date);
             if(idx >= 0) data[idx] = newRecord;
             else data.push(newRecord);
 
-            // 排序
             data.sort((a,b) => new Date(a.date) - new Date(b.date));
 
-            document.getElementById('status').innerText = "正在同步到 GitHub...";
+            document.getElementById('status').innerText = "同步中...";
             const success = await db.save(DATA_FILE, data);
             document.getElementById('status').innerText = success ? "✅ 同步成功" : "❌ 失败";
-            
             if(success) renderTable(data);
         }
 
@@ -103,7 +100,5 @@
             });
         }
     </script>
-    <script src="js/lock.js"></script>
 </body>
 </html>
-
