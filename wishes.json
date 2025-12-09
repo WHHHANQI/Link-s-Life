@@ -19,5 +19,12 @@
     "cost": 2000000,
     "img": "https://github.com/WHHHANQI/Link-s-Life/blob/main/image/porsche.png?raw=true",
     "current": 0
+  },
+  {
+    "id": 1765296710816,
+    "title": "去冰岛旅游",
+    "cost": 0,
+    "img": "https://github.com/WHHHANQI/Link-s-Life/blob/main/image/冰岛.jpg?raw=true",
+    "current": 0
   }
 ]
