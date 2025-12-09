@@ -1,1 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link's Life - 资产</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
 
+    <nav class="navbar">
+        <div class="brand">Link's Life</div>
+        <div class="nav-links">
+            <a href="index.html" class="active">💰 资产记录</a>
+            <a href="wishes.html">✨ 愿望影集</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <h3>⚙️ 数据库连接</h3>
+            <p style="font-size:0.8rem; color:#666;">初次使用请填入GitHub用户名和Token，只需配置一次。</p>
+            <input id="ghUser" placeholder="GitHub Username">
+            <input id="ghRepo" placeholder="Repository Name" value="Link-s-Life">
+            <button onclick="saveConfig()">连接云端</button>
+        </div>
+
+        <div class="card">
+            <h2>📝 今日资产</h2>
+            <input id="dateInput" type="date">
+            <input id="hold" type="number" placeholder="持仓金额">
+            <input id="cash" type="number" placeholder="现金余额">
+            <button onclick="addRecord()">上传数据</button>
+        </div>
+
+        <div class="card">
+            <h2>📊 历史趋势</h2>
+            <div id="status"></div>
+            <table style="width:100%; text-align:left;">
+                <thead><tr><th>日期</th><th>总资产</th><th>仓位</th></tr></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="js/db.js"></script>
+    <script>
+        // 实例化 DB
+        const db = new GithubDB();
+        const DATA_FILE = "finance_data.json"; // 这个页面专门读写这个文件
+
+        // 页面加载
+        window.onload = async () => {
+            document.getElementById('dateInput').valueAsDate = new Date();
+            // 回填配置信息
+            if(db.config.user) document.getElementById('ghUser').value = db.config.user;
+            
+            // 加载数据
+            const data = await db.load(DATA_FILE);
+            if(data) renderTable(data);
+        };
+
+        function saveConfig() {
+            const user = document.getElementById('ghUser').value;
+            const repo = document.getElementById('ghRepo').value;
+            const token = prompt("请输入 GitHub Token:");
+            if(token) {
+                db.saveConfig(user, repo, token);
+                alert("配置已保存！刷新页面加载数据。");
+                location.reload();
+            }
+        }
+
+        async function addRecord() {
+            const date = document.getElementById('dateInput').value;
+            const hold = Number(document.getElementById('hold').value);
+            const cash = Number(document.getElementById('cash').value);
+            
+            let data = await db.load(DATA_FILE) || [];
+            
+            // 简单的新增/覆盖逻辑
+            const newRecord = { date, hold, cash, total: hold+cash };
+            const idx = data.findIndex(d => d.date === date);
+            if(idx >= 0) data[idx] = newRecord;
+            else data.push(newRecord);
+
+            // 排序
+            data.sort((a,b) => new Date(a.date) - new Date(b.date));
+
+            document.getElementById('status').innerText = "正在同步到 GitHub...";
+            const success = await db.save(DATA_FILE, data);
+            document.getElementById('status').innerText = success ? "✅ 同步成功" : "❌ 失败";
+            
+            if(success) renderTable(data);
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = "";
+            [...data].reverse().forEach(row => {
+                const pos = row.total > 0 ? ((row.hold/row.total)*100).toFixed(1) : 0;
+                tbody.innerHTML += `<tr><td>${row.date}</td><td>${row.total}</td><td>${pos}%</td></tr>`;
+            });
+        }
+    </script>
+</body>
+</html>
