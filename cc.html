@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For CC - Success Journal</title>
+    <link rel="stylesheet" href="css/style.css?v=2">
+    <style>
+        /* 专属配色微调：给她的页面加一点点温暖的粉色调装饰 */
+        .card h2::before { background-color: #ec4899; box-shadow: 0 0 10px #ec4899; }
+        .journal-date { color: #ec4899; background: rgba(236, 72, 153, 0.05); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h2>💖 陈陈的成功日记 (CC's Journal)</h2>
+            <p style="font-size: 0.8rem; color: #64748b;">
+                亲爱的陈陈，记录下今天发生的小确幸或小成就吧~<br>
+                Record your daily wins, my dear CC.
+            </p>
+            
+            <input id="dateInput" type="date">
+            
+            <textarea id="journalInput" rows="6" 
+                style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-family: inherit;" 
+                placeholder="1. 今天喝到了好喝的奶茶&#10;2. 完成了工作任务&#10;3. 开心！"></textarea>
+            
+            <button onclick="addJournal()" style="margin-top: 10px; width: 100%; background: linear-gradient(135deg, #ec4899, #db2777);">
+                💾 保存 (Save for CC)
+            </button>
+        </div>
+
+        <div id="journalGrid">
+            </div>
+    </div>
+
+    <script src="js/db.js"></script>
+    <script src="js/lock.js"></script>
+    <script src="js/nav.js"></script>
+
+    <script>
+        // 1. 生成导航栏，页面ID 设为 'cc'
+        renderNav('cc');
+
+        const db = new GithubDB();
+        // ⚠️ 关键点：数据存在专属的 cc_journal.json 里，不和你的混淆
+        const FILE_NAME = "cc_journal.json"; 
+        let localData = [];
+
+        window.addEventListener('app-ready', async () => {
+            document.getElementById('dateInput').valueAsDate = new Date();
+            
+            const data = await db.load(FILE_NAME);
+            if(data) {
+                localData = data;
+                renderJournals();
+            }
+        });
+
+        async function addJournal() {
+            const date = document.getElementById('dateInput').value;
+            const content = document.getElementById('journalInput').value;
+            
+            if(!content.trim()) return alert("写点什么吧~");
+
+            const newEntry = { 
+                id: Date.now(), 
+                date, 
+                content 
+            };
+            
+            localData.push(newEntry);
+            localData.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+            await db.save(FILE_NAME, localData);
+            
+            document.getElementById('journalInput').value = "";
+            renderJournals();
+        }
+
+        function renderJournals() {
+            const grid = document.getElementById('journalGrid');
+            grid.innerHTML = "";
+            
+            localData.forEach(item => {
+                grid.innerHTML += `
+                    <div class="card">
+                        <div class="journal-date">
+                            <span>📅 ${item.date}</span>
+                            <span style="cursor:pointer; opacity:0.6;" onclick="deleteJournal(${item.id})">×</span>
+                        </div>
+                        <div class="journal-content" style="white-space: pre-wrap;">${item.content}</div>
+                    </div>
+                `;
+            });
+        }
+
+        async function deleteJournal(id) {
+            if(!confirm("确定删除这条吗？")) return;
+            localData = localData.filter(i => i.id !== id);
+            await db.save(FILE_NAME, localData);
+            renderJournals();
+        }
+    </script>
+</body>
+</html>
