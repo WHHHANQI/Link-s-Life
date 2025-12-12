@@ -1,5 +1,5 @@
 (function() {
-    const MY_PASSWORD = "Link777";
+    const MY_PASSWORD = "qq2cc";
 
     const readyEvent = new Event('app-ready');
 
