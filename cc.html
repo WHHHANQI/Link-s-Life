@@ -6,34 +6,26 @@
     <title>For CC - Success Journal</title>
     <link rel="stylesheet" href="css/style.css?v=2">
     <style>
-        /* 粉色主题微调 */
         .card h2::before { background-color: #ec4899; box-shadow: 0 0 10px #ec4899; }
-        .journal-date { color: #db2777; background: rgba(236, 72, 153, 0.08); }
-        
-        /* 按钮组样式 */
-        .action-btns {
+        .journal-date { 
+            color: #db2777; 
+            background: rgba(236, 72, 153, 0.08); 
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
             display: flex;
-            gap: 10px;
+            justify-content: space-between;
+            align-items: center;
         }
-        .btn-icon {
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            transition: all 0.2s;
-        }
-        .btn-edit { color: #3b82f6; background: rgba(59, 130, 246, 0.1); } /* 蓝色编辑 */
-        .btn-edit:hover { background: rgba(59, 130, 246, 0.2); }
         
-        .btn-del { color: #ef4444; background: rgba(239, 68, 68, 0.1); } /* 红色删除 */
-        .btn-del:hover { background: rgba(239, 68, 68, 0.2); }
+        /* 极简按钮 */
+        .action-btns { display: flex; gap: 12px; }
+        .btn-icon { cursor: pointer; font-size: 1.2rem; transition: transform 0.2s; }
+        .btn-icon:hover { transform: scale(1.2); }
+        .btn-edit { color: #3b82f6; } 
+        .btn-del { color: #ef4444; }
 
-        /* 编辑模式下的取消按钮 */
-        #cancelBtn {
-            background-color: #94a3b8;
-            margin-top: 10px;
-            display: none; /* 默认隐藏 */
-        }
+        #cancelBtn { display: none; background-color: #94a3b8; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -41,27 +33,23 @@
         <div class="card">
             <h2>💖 陈陈的成功日记 (CC's Journal)</h2>
             <p style="font-size: 0.8rem; color: #64748b;">
-                亲爱的陈陈，记录下今天发生的小确幸或小成就吧~<br>
-                Record your daily wins, my dear CC.
+                亲爱的陈陈，一天只能记一次哦。<br>
+                One entry per day.
             </p>
             
             <input id="dateInput" type="date">
             
             <textarea id="journalInput" rows="6" 
                 style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-family: inherit;" 
-                placeholder="1. 今天喝到了好喝的奶茶&#10;2. 完成了工作任务&#10;3. 开心！"></textarea>
+                placeholder="1. ...&#10;2. ..."></textarea>
             
             <button id="saveBtn" onclick="saveJournal()" style="margin-top: 10px; width: 100%; background: linear-gradient(135deg, #ec4899, #db2777);">
                 💾 保存 (Save)
             </button>
-            
-            <button id="cancelBtn" onclick="cancelEdit()" style="width: 100%;">
-                ✖️ 取消编辑 (Cancel Edit)
-            </button>
+            <button id="cancelBtn" onclick="cancelEdit()" style="width: 100%;">✖️ 取消编辑 (Cancel)</button>
         </div>
 
-        <div id="journalGrid">
-            </div>
+        <div id="journalGrid"></div>
     </div>
 
     <script src="js/db.js"></script>
@@ -70,18 +58,13 @@
 
     <script>
         renderNav('cc');
-
         const db = new GithubDB();
         const FILE_NAME = "cc_journal.json"; 
         let localData = [];
-        
-        // 【核心逻辑】编辑状态标记
-        // null = 新增模式; 有数值 = 正在编辑该 ID 的条目
-        let editingId = null; 
+        let editingId = null;
 
         window.addEventListener('app-ready', async () => {
             document.getElementById('dateInput').valueAsDate = new Date();
-            
             const data = await db.load(FILE_NAME);
             if(data) {
                 localData = data;
@@ -89,73 +72,59 @@
             }
         });
 
-        // 1. 保存/更新逻辑 (二合一)
         async function saveJournal() {
             const date = document.getElementById('dateInput').value;
             const content = document.getElementById('journalInput').value;
             
             if(!content.trim()) return alert("写点什么吧~");
 
+            // === 防重复逻辑 ===
+            const duplicate = localData.find(item => item.date === date && item.id !== editingId);
+            if (duplicate) {
+                alert(`⚠️ 这一天 (${date}) 已经写过日记啦！\n请在下方找到那条记录进行修改。`);
+                return; 
+            }
+
             if (editingId) {
-                // === 更新模式 ===
-                // 找到那条旧数据，更新它
                 const index = localData.findIndex(item => item.id === editingId);
                 if (index !== -1) {
                     localData[index].date = date;
                     localData[index].content = content;
                 }
-                alert("已更新！Updated!");
+                alert("修改成功！");
             } else {
-                // === 新增模式 ===
-                const newEntry = { 
-                    id: Date.now(), 
-                    date, 
-                    content 
-                };
+                const newEntry = { id: Date.now(), date, content };
                 localData.push(newEntry);
             }
 
-            // 重新排序并保存
             localData.sort((a,b) => new Date(b.date) - new Date(a.date));
             await db.save(FILE_NAME, localData);
             
-            // 重置状态
             resetForm();
             renderJournals();
         }
 
-        // 2. 开始编辑
         function startEdit(id) {
             const item = localData.find(i => i.id === id);
             if (!item) return;
 
-            // 1. 回填数据到输入框
             document.getElementById('dateInput').value = item.date;
             document.getElementById('journalInput').value = item.content;
-            
-            // 2. 标记正在编辑的ID
             editingId = id;
 
-            // 3. 改变界面状态
             document.getElementById('saveBtn').innerText = "🔄 更新 (Update)";
-            document.getElementById('cancelBtn').style.display = "block"; // 显示取消按钮
-            
-            // 4. 滚回到顶部方便编辑
+            document.getElementById('cancelBtn').style.display = "block";
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // 3. 取消编辑
         function cancelEdit() {
             resetForm();
         }
 
-        // 4. 重置表单到初始状态
         function resetForm() {
             editingId = null;
             document.getElementById('journalInput').value = "";
             document.getElementById('dateInput').valueAsDate = new Date();
-            
-            // 还原按钮
             document.getElementById('saveBtn').innerText = "💾 保存 (Save)";
             document.getElementById('cancelBtn').style.display = "none";
         }
@@ -170,8 +139,8 @@
                         <div class="journal-date">
                             <span>📅 ${item.date}</span>
                             <div class="action-btns">
-                                <span class="btn-icon btn-edit" onclick="startEdit(${item.id})">✎ 编辑</span>
-                                <span class="btn-icon btn-del" onclick="deleteJournal(${item.id})">× 删除</span>
+                                <span class="btn-icon btn-edit" onclick="startEdit(${item.id})" title="编辑">✎</span>
+                                <span class="btn-icon btn-del" onclick="deleteJournal(${item.id})" title="删除">×</span>
                             </div>
                         </div>
                         <div class="journal-content" style="white-space: pre-wrap;">${item.content}</div>
@@ -182,9 +151,7 @@
 
         async function deleteJournal(id) {
             if(!confirm("确定删除这条吗？")) return;
-            // 如果正在编辑这条，先退出编辑模式
             if (editingId === id) cancelEdit();
-            
             localData = localData.filter(i => i.id !== id);
             await db.save(FILE_NAME, localData);
             renderJournals();
